@@ -28,7 +28,7 @@ def filter_names(img_names, labels, counts, points_names, img_names_test):
 
 class JcuFish(data.Dataset):
     def __init__(self, split, datadir, exp_dict, habitat=None):
-        
+
         self.count_mode = False
         if split == 'train':
             self.count_mode = exp_dict['model'].get('count_mode')
@@ -89,29 +89,28 @@ class JcuFish(data.Dataset):
         self.img_transform = transforms.Compose([
             transforms.Resize(self.size, interpolation=Image.BILINEAR),
             transforms.ToTensor(),
-            #transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            ])
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
 
-        
+       
         self.gt_transform = transforms.Compose([
             transforms.Resize(self.size, interpolation=Image.NEAREST),
             # transforms.rotate(-90),
             # transforms.ToTensor()
             ])
 
-        #with_fish = self.labels.sum()
+        with_fish = self.labels.sum()
         #print(split, ':', len(self), ', with_fish:', with_fish, ', without_fish:', len(self.labels) - with_fish)
         
         
     def __getitem__loc(self, index):
         name = self.img_names[index]
-        image_pil = Image.open(self.path.replace("JCU_Fish","DeepAgro") + "/images/"+ name + ".jpg")
+        image_pil = Image.open(self.path + "/images/"+ name + ".jpg")
         W, H = image_pil.size
         original = copy.deepcopy(image_pil)
         image = self.img_transform(image_pil)
         h, w = image.shape[-2:]
         # get points
-        points = Image.open(self.path.replace("JCU_Fish","DeepAgro") + "/masks/"+ name + ".png")#[..., np.newaxis]
+        points = Image.open(self.path + "/masks/"+ name + ".png")#[..., np.newaxis]
         # points = self.gt_transform(points)
         points = np.array(points).clip(0,1)
         points = points.squeeze()
@@ -157,24 +156,23 @@ class JcuFish(data.Dataset):
         if self.count_mode:
             return self.__getitem__loc(index)
         # Segmentation
-        image = rgb_loader(os.path.join(self.datadir.replace("JCU_Fish","DeepAgro"), "Segmentation/images", self.images[index]+'.jpg'))
-        gt = binary_loader(os.path.join(self.datadir.replace("JCU_Fish","DeepAgro"), "Segmentation/masks", self.gts[index]+'.jpg'))
+        image = rgb_loader(os.path.join(self.datadir, "Segmentation/images", self.images[index]+'.jpg'))
+        gt = binary_loader(os.path.join(self.datadir, "Segmentation/masks", self.gts[index]+'.jpg'))
         #image = rgb_loader(os.path.join(self.images[index]))
         #gt = binary_loader(os.path.join(self.gts[index]))
         original = copy.deepcopy(image)
 
         image = self.img_transform(image)
-        #print(f"Valores únicos en la máscara: {np.unique(gt)}")
+        print(f"Valores únicos en la máscara: {np.unique(gt)}")
         gt = self.gt_transform(gt)
         gt = np.array(gt)
-        #gt[gt==255] = 1
-        gt[gt>0] = 1
-        #print(f"Valores únicos en la máscara transformada: {np.unique(gt)}")
-        #import matplotlib.pyplot as plt
-        #plt.imshow(gt, cmap='gray')
-        #plt.title(f"GT index {index}")
-        #plt.axis('off')
-        #plt.show()
+        gt[gt==255] = 1
+        print(f"Valores únicos en la máscara transformada: {np.unique(gt)}")
+        import matplotlib.pyplot as plt
+        plt.imshow(gt, cmap='gray')
+        plt.title(f"GT index {index}")
+        plt.axis('off')
+        plt.show()
 
         img_size = (gt.shape[0], gt.shape[1])
 
@@ -199,8 +197,7 @@ class JcuFish(data.Dataset):
                  'original':original,
                  'masks': torch.as_tensor(gt).long(),
                  'points': torch.LongTensor(points),
-                 #'label' : torch.from_numpy(np.ndarray([self.labels[index]])),
-                 'label' : torch.from_numpy(np.ndarray([1]*len([self.labels[index]]))),               
+                 'label' : torch.from_numpy(np.ndarray([self.labels[index]])),
                 #  "labels_other": float(self.labels_other[index] > 0),
                  'size': img_size,
 
@@ -243,7 +240,6 @@ def get_seg_data(path_base, split,  habitat=None ):
     img_names = np.array(df['ID'])
     mask_names = np.array(df['ID'])
     labels = np.array(df['labels'])
-    labels = np.ones(len(df['labels'])) # new
     return img_names, labels, mask_names
 
 def slice_df_reg(df, habitat):
@@ -259,7 +255,6 @@ def get_loc_data(datadir, split,  habitat=None ):
     points_names = np.array(df['ID'])
     counts = np.array(df['counts'])
     labels = np.array(df['labels'])
-    labels = np.ones(len(df['labels'])) # new
     return img_names,labels, counts, points_names
     
 # for clf,

@@ -28,10 +28,87 @@ from scipy.ndimage.filters import gaussian_filter
 
 from . import optimizers, metrics, networks
 from src.modules import sstransforms as sst
+from torchvision.transforms import functional as TF
 
 def distance(x1, x2):
     diff = torch.abs(x1 - x2)
     return torch.pow(diff, 2).sum(dim=1)
+
+def custom_save_image(savedir, image, mask=None, points=None, name=None, return_image=False):
+    """
+    Guarda una imagen con superposiciones de máscara y puntos, manejando tensores PyTorch.
+    
+    Args:
+        savedir (str): Directorio de guardado
+        image (Tensor/np.ndarray): Imagen en formato (C, H, W) o (H, W)
+        mask (Tensor/np.ndarray): Máscara binaria en formato (B, C, H, W) o similar
+        points (list): Lista de puntos (x, y)
+        name (str): Nombre del archivo
+        return_image (bool): Si retornar la imagen modificada
+    """
+    import os
+    import cv2
+    import numpy as np
+    
+    os.makedirs(savedir, exist_ok=True)
+
+    # 1. Procesar imagen
+    if isinstance(image, torch.Tensor):
+        image = image.detach().cpu().numpy()
+        
+    # Eliminar dimensiones innecesarias y reordenar canales
+    if image.ndim == 3:
+        if image.shape[0] in [1, 3]:  # Formato (C, H, W)
+            image = image.transpose(1, 2, 0)
+        image = image.squeeze()
+    
+    # Convertir a uint8 y escala 0-255
+    if image.dtype != np.uint8:
+        image = (image * 255).clip(0, 255).astype(np.uint8)
+    
+    # Convertir a RGB si es escala de grises
+    if image.ndim == 2:
+        image = np.stack([image] * 3, axis=-1)
+    elif image.shape[2] == 1:
+        image = np.concatenate([image] * 3, axis=-1)
+
+    # 2. Procesar máscara
+    if mask is not None:
+        if isinstance(mask, torch.Tensor):
+            mask = mask.detach().cpu().numpy()
+        
+        # Eliminar dimensiones extras (batch, channel)
+        mask = mask.squeeze()
+        
+        # Validar dimensiones finales
+        if mask.ndim != 2:
+            raise ValueError(f"Máscara debe ser 2D después de squeeze. Shape actual: {mask.shape}")
+        
+        if mask.shape != image.shape[:2]:
+            raise ValueError(f"Shape máscara {mask.shape} != shape imagen {image.shape[:2]}")
+        
+        # Crear overlay rojo
+        mask_rgb = np.zeros_like(image)
+        mask_rgb[mask > 0] = [255, 0, 0]  # Rojo
+        image = cv2.addWeighted(image, 0.7, mask_rgb, 0.3, 0)
+
+    # 3. Dibujar puntos
+    if points is not None:
+        for pt in points:
+            if isinstance(pt, (list, tuple)) and len(pt) == 2:
+                x, y = map(int, pt)
+                cv2.circle(image, (x, y), radius=3, color=(0, 255, 0), thickness=-1)
+            else:
+                #print(f"Punto inválido ignorado: {pt}")
+                pass
+
+    # 4. Guardar
+    filename = name if name else "image.png"
+    save_path = os.path.join(savedir, filename)
+    cv2.imwrite(save_path, image)
+
+    return image if return_image else None
+
 class SemSeg(torch.nn.Module):
     def __init__(self, exp_dict, train_set):
         super().__init__()
@@ -108,12 +185,28 @@ class SemSeg(torch.nn.Module):
             assert batch["masks"].sum() > 0
             logits = self.model_base(images)
             # full supervision
+            if logits.shape[-2:] != batch["masks"].shape[-2:]:
+                if batch["masks"].dim() == 2:  # If masks are (H, W), add batch and channel dimensions
+                    batch["masks"] = batch["masks"].unsqueeze(0).unsqueeze(0)
+                elif batch["masks"].dim() == 3:  # If masks are (C, H, W), add batch dimension
+                    batch["masks"] = batch["masks"].unsqueeze(0)
+                elif batch["masks"].dim() == 1:  # If masks are (H), reshape to (1, 1, H, 1)
+                    batch["masks"] = batch["masks"].unsqueeze(0).unsqueeze(0).unsqueeze(-1)
+                batch["masks"] = TF.resize(batch["masks"], size=logits.shape[-2:], interpolation=TF.InterpolationMode.NEAREST)
             loss = losses.compute_cross_entropy(images, logits, masks=batch["masks"].cuda())
 
 
         elif loss_name in 'cross_entropy':
             logits = self.model_base(images)
             # full supervision
+            if logits.shape[-2:] != batch["masks"].shape[-2:]:
+                if batch["masks"].dim() == 2:  # If masks are (H, W), add batch and channel dimensions
+                    batch["masks"] = batch["masks"].unsqueeze(0).unsqueeze(0)
+                elif batch["masks"].dim() == 3:  # If masks are (C, H, W), add batch dimension
+                    batch["masks"] = batch["masks"].unsqueeze(0)
+                elif batch["masks"].dim() == 1:  # If masks are (H), reshape to (1, 1, H, 1)
+                    batch["masks"] = batch["masks"].unsqueeze(0).unsqueeze(0).unsqueeze(-1)
+                batch["masks"] = TF.resize(batch["masks"], size=logits.shape[-2:], interpolation=TF.InterpolationMode.NEAREST)
             loss = losses.compute_cross_entropy(images, logits, masks=batch["masks"].cuda())
 
         elif loss_name in 'pseudo_mask':
@@ -125,14 +218,26 @@ class SemSeg(torch.nn.Module):
                 hash_id = '13b0f4e395b6dc5368f7965c20e75612'
             else:
                 hash_id = '9c7533a7c61f72919b9afd749dbb88e1'
-            path = '/mnt/public/predictions/pseudo_masks/%s/train' % hash_id
+            #path = '/mnt/public/predictions/pseudo_masks/%s/train' % hash_id
+            #path = 'masks/%s/train' % hash_id
+            #path = 'affinity_lcfcn/JCU_Fish/Segmentation/masks'
+            path = 'DeepAgro/Segmentation/masks'
             masks = jcu_fish.binary_loader(os.path.join(path, batch['meta'][0]['name']+'.png'))
             masks = np.array(self.train_set.gt_transform(masks))
-            masks[masks==255] = 1
-            masks = torch.as_tensor(masks)
-            # print(masks.unique())
-            # hu.save_image('tmp.png', hu.denormalize(images, mode='rgb'), mask=masks.numpy())
-            loss = losses.compute_cross_entropy(images, logits, masks=masks[None].cuda())
+            masks[masks == 255] = 1
+            masks = torch.as_tensor(masks).long()
+
+            if masks.ndim == 2:
+                masks = masks.unsqueeze(0).unsqueeze(0)  # (1, 1, H, W)
+            elif masks.ndim == 3:
+                masks = masks.unsqueeze(0)  # (1, 1, H, W)
+
+            if logits.shape[-2:] != masks.shape[-2:]:
+                masks = TF.resize(masks, size=logits.shape[-2:], interpolation=TF.InterpolationMode.NEAREST)
+
+            masks = masks.squeeze(1).cuda()  # (N, H, W)
+            loss = losses.compute_cross_entropy(images, logits, masks=masks)
+
 
 
         elif loss_name in 'point_level':
@@ -213,17 +318,23 @@ class SemSeg(torch.nn.Module):
 
         return res 
 
+
     def vis_on_batch(self, batch, savedir_image):
         image = batch['images']
-        original = hu.denormalize(image, mode='rgb')[0]
+        def custom_denormalize(image, mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+            """Custom denormalization function to replace hu.denormalize."""
+            mean = torch.tensor(mean).view(1, -1, 1, 1).to(image.device)
+            std = torch.tensor(std).view(1, -1, 1, 1).to(image.device)
+            return image * std + mean
+        original = custom_denormalize(image)[0]
         gt = np.asarray(batch['masks'])
 
         image = F.interpolate(image, size=gt.shape[-2:], mode='bilinear', align_corners=False)
-        img_pred = hu.save_image(savedir_image,
+        img_pred = custom_save_image(savedir_image,
                     original,
                       mask=self.predict_on_batch(batch), return_image=True)
 
-        img_gt = hu.save_image(savedir_image,
+        img_gt = custom_save_image(savedir_image,
                      original,
                       mask=gt, return_image=True)
         img_gt = models.text_on_image( 'Groundtruth', np.array(img_gt), color=(0,0,0))
@@ -231,20 +342,18 @@ class SemSeg(torch.nn.Module):
         
         if 'points' in batch:
             pts = (batch['points'][0].numpy().copy()).astype('uint8')
-            # pts[pts == 1] = 2
-            # pts[pts == 0] = 1
             pts[pts != 255] = 1
             pts[pts == 255] = 0
-            img_gt = np.array(hu.save_image(savedir_image, img_gt/255.,
+            img_gt = np.array(custom_save_image(savedir_image, img_gt/255.,
                                 points=pts.squeeze(), 
-                                radius=2, return_image=True))
+                                return_image=True))
         img_list = [np.array(img_gt), np.array(img_pred)]
-        hu.save_image(savedir_image, np.hstack(img_list))
-        # hu.save_image('.tmp/pred.png', np.hstack(img_list))
+        custom_save_image(savedir_image, np.hstack(img_list))
 
     def val_on_loader(self, loader, savedir_images=None, n_images=0):
         self.eval()
         val_meter = metrics.SegMeter(split=loader.dataset.split)
+        #val_meter = metrics.SegMeterBinary(split=loader.dataset.split)
         
         i_count = 0
         for i, batch in enumerate(tqdm.tqdm(loader)):
@@ -343,4 +452,5 @@ def xlogy(x, y=None):
         y = x
     assert y.min() >= 0
     return x * torch.where(x == 0., z.cuda(), torch.log(y))
+
 

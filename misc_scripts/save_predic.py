@@ -1,0 +1,107 @@
+import os
+import torch
+import numpy as np
+import torchvision.transforms as T
+from PIL import Image
+import matplotlib.pyplot as plt
+from haven import haven_utils as hu
+from src import models
+from src import datasets
+from src.datasets import jcu_fish
+import exp_configs
+
+
+# Configuraciones
+exp_name = 'with_affinity&lcfcn_loss'                               # Nombre del experimento
+base_dir = os.getcwd()                                              # Ruta base (usualmente donde se ejecuta el script)
+exp_dict_path = os.path.join(base_dir, 'results', exp_name, 'exp_dict.json') # Ruta completa al exp_dict.json
+model_path = os.path.join(base_dir, 'results', exp_name, 'model_best.pth') # Ruta completa al modelo
+
+# Lista de imágenes a predecir
+validation_images = [
+    r'DeepAgro\Segmentation\images\valid\657d1748-839a-4e18-ab64-a6cca9ec2e26.jpg',
+    r'DeepAgro\Segmentation\images\valid\db836de8-2a4f-4e2d-81c5-50c4b6c7e874.jpg'
+]
+for image_path in validation_images:
+    print(repr(image_path))  # <- muestra caracteres especiales como \v
+
+# Cargar exp_dict
+#exp_dict_path = os.path.join(savedir, "exp_dict.json")
+exp_dict = hu.load_json(exp_dict_path)
+print("1")
+# Dataset (solo para transformar si es necesario)
+
+dummy_dataset = jcu_fish.JcuFish(
+    split="val",
+    datadir='DeepAgro',
+    exp_dict=exp_dict
+)
+'''
+dummy_dataset = datasets.get_dataset(
+    dataset_dict=exp_dict["dataset"],
+    split="val",
+    datadir='JCU_Fish',
+    exp_dict=exp_dict,
+    dataset_size=exp_dict['dataset_size']
+)
+'''
+print(f"Dataset: {dummy_dataset.__class__.__name__}")
+print(dummy_dataset)
+
+# Transformaciones (según el dataset) ###SI FALLA: cambiar transform por transform_img
+'''
+transform = dummy_dataset.transform if hasattr(dummy_dataset, 'transform') else T.Compose([
+    T.ToTensor()
+])
+'''
+transform = dummy_dataset.img_transform
+print(f"Transform: {transform}")
+
+# Cargar modelo
+print("2")
+model = models.get_model(model_dict=exp_dict['model'], exp_dict=exp_dict, train_set=dummy_dataset)
+print("3")
+model.load_state_dict(hu.torch_load(model_path))
+print("4")
+model = model.cuda()
+print("5")
+model.eval()
+print("6")
+# Crear directorio para máscaras predichas
+output_dir = os.path.join(base_dir, 'predicted_masks')
+os.makedirs(output_dir, exist_ok=True)
+print("7")# Inferencia sobre cada imagen
+print("len images:", len(validation_images))
+for image_path in validation_images:
+    with torch.no_grad():
+        print(f"\nProcesando {image_path}")
+        image = Image.open(image_path).convert('RGB')
+
+        # Mostrar resolución original
+        print(f"Resolución original: {image.size}")  # (width, height)
+
+        # Redimensionar a 256x256
+        #image_resized = image.resize((512, 512))
+        #print(f"Resolución redimensionada: {image_resized.size}")
+
+        # Aplicar transformaciones
+        image_tensor = transform(image).unsqueeze(0).cuda()  # [1, C, H, W]
+        print(f"Tamaño del tensor: {image_tensor.shape}")  # (1, 3, 256, 256)
+
+        # Construir el batch para predict_on_batch
+        batch = {
+            'images': image_tensor,
+            'meta': [{'shape': image_tensor.shape[-2:]}]  # ya redimensionado
+        }
+        resized_res = f"{image_tensor.shape[2]}x{image_tensor.shape[3]}"
+        print("Ejecutando inferencia...")
+        pred = model.predict_on_batch(batch)  # model es tu instancia de SemSeg
+
+        # Guardar la máscara
+        mask_np = pred[0] * 255
+        mask_img = Image.fromarray(mask_np.astype(np.uint8))
+        out_path = os.path.join(output_dir, f"{resized_res}_{os.path.basename(image_path).replace(".jpg", "_mask.png")}")
+        mask_img.save(out_path)
+        print(f"Guardada: {out_path}")
+
+    torch.cuda.empty_cache()

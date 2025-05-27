@@ -137,8 +137,8 @@ class SegMeterBinary:
             self.cf += cf
 
         # structure
-        struct_score = float(struct_metric.compute_struct_metric(pred_mask_org, masks_org))
-        self.struct_list += [struct_score]
+        #struct_score = float(struct_metric.compute_struct_metric(pred_mask_org, masks_org))
+        #self.struct_list += [struct_score]
 
     def get_avg_score(self):
         TP = np.diag(self.cf)
@@ -165,6 +165,8 @@ class SegMeterBinary:
         fscore = (( 2.0 * prec * recall ) / (prec + recall))
 
         val_dict = {}
+        #val_dict = {'%s_score' % self.split: dice[0]}
+        
         if self.n_classes == 1:
             val_dict['%s_dice' % self.split] = dice[0]
             val_dict['%s_iou' % self.split] = iou[0]

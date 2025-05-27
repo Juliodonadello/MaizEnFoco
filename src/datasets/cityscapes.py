@@ -10,15 +10,15 @@ from haven import haven_utils as hu
 from haven import haven_img as hi
 from skimage.io import imread
 from scipy.io import loadmat
-import torchvision.transforms.functional as FT
+#import torchvision.transforms.functional as FT
 import numpy as np
 import torch
 from skimage.io import imread
-import torchvision.transforms.functional as FT
+#import torchvision.transforms.functional as FT
 from skimage.transform import rescale
 import torchvision
 from torchvision import datasets
-from torchvision.transforms import transforms
+import torchvision.transforms as transforms
 import pylab as plt
 from skimage.color import label2rgb
 # from repos.selectivesearch.selectivesearch import selective_search
@@ -264,17 +264,36 @@ def inv_transform(images):
     return images_arr
 
 
-class CityScapesTrainIds(datasets.Cityscapes):
-    def __init__(self, root, split='train', mode='fine', target_type='instance',
-                 transform=None, target_transform=None, transforms=None):
-        super().__init__(root, split, mode, target_type,
-                 transform, target_transform, transforms)
+class CityScapesTrainIds:
+    def __init__(self, root, split='train', mode='fine', target_type='instance'):
+        self.root = root
+        self.split = split
+        self.mode = mode
+        self.target_type = target_type
+        self.images = self._load_images()
+        self.targets = self._load_targets()
+
+    def _load_images(self):
+        # Implement logic to load image file paths
+        return []
+
+    def _load_targets(self):
+        # Implement logic to load target file paths
+        return []
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        # Implement logic to load and return an image and its target
+        image = Image.open(self.images[index])
+        target = Image.open(self.targets[index])
+        return image, target
 
     def _get_target_suffix(self, mode, target_type):
         if target_type == 'instance':
             return '{}_instanceIds.png'.format(mode)
         elif target_type == 'semantic':
-            # return '{}_labelIds.png'.format(mode)
             return '{}_labelTrainIds.png'.format(mode)
         elif target_type == 'color':
             return '{}_color.png'.format(mode)

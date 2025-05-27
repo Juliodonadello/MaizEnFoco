@@ -11,9 +11,9 @@ JOB_CONFIG = {
                                 'restartable':True,
                                 'resources': {
                                     'cpu': 4,
-                                    'mem': 8,
+                                    'mem': 12,
                                     'gpu': 1
                                 },
                                 'interactive': False,
-                                'bid': 5000,
+                                'bid': 10000,
                                 }

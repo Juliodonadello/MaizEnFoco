@@ -120,7 +120,8 @@ def watersplit(_probs, _points):
     points = _points.copy()
 
     points[points != 0] = np.arange(1, points.sum()+1)
-    points = points.astype(float)
+    #points = points.astype(float)  #old
+    points = points.astype(np.int32)
 
     probs = ndimage.black_tophat(_probs.copy(), 7)
     seg = watershed(probs, points)
@@ -204,7 +205,7 @@ def get_random_points(mask, n_points=1, seed=1):
 def get_points_from_mask(mask, bg_points=0):
     n_points = 0
     points = np.zeros(mask.shape)
-    # print(np.unique(mask))
+    #print(f"Valores únicos en la máscara: {np.unique(mask)}")
     assert(len(np.setdiff1d(np.unique(mask),[0,1,2] ))==0)
 
     for c in np.unique(mask):

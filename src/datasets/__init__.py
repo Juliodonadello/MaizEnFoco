@@ -2,7 +2,7 @@ import torchvision
 import torch
 from haven import haven_utils as hu
 import numpy as np
-from torchvision.transforms import transforms
+from torchvision import transforms
 from sklearn.utils import shuffle
 from PIL import Image
 from . import pascal, jcu_fish, cityscapes, sum_fish
@@ -43,7 +43,7 @@ def get_dataset(dataset_dict, split, datadir, exp_dict, dataset_size=None):
         possible_datadir = ('/mnt/datasets/public/issam/data/medical/jcu_fish/Segmentation')
         if os.path.exists(possible_datadir):
             datadir = possible_datadir
-        dataset = jcu_fish.JcuFish(split=split,  datadir=datadir, exp_dict=exp_dict)
+        dataset = jcu_fish.JcuFish(split=split,  datadir=datadir.replace("JCU_Fish","DeepAgro"), exp_dict=exp_dict)
         if dataset_size is not None and dataset_size.get(split, 'all') != 'all':
             dataset.dataset_size = dataset_size[split]
 

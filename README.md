@@ -1,6 +1,8 @@
 
 # Weakly Supervised Fish Segmentation
 
+python .\trainval.py -e weakly_JCUfish -sb results -d JCU_Fish
+
 ### JCU fish
 
 - https://www.dropbox.com/sh/b2jlua76ogyr5rk/AABsJVljG7v2BOunE1k4f_XTa?dl=0

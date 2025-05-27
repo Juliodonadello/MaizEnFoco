@@ -10,15 +10,16 @@ from haven import haven_utils as hu
 from src import datasets
 from skimage.io import imread
 from scipy.io import loadmat
-import torchvision.transforms.functional as FT
+#import torchvision.transforms.functional as FT
 import numpy as np
 import torch
 from skimage import morphology
 from skimage.io import imread
-import torchvision.transforms.functional as FT
+import torchvision.transforms as transforms
+#import torchvision.transforms.functional as FT
 from skimage.transform import rescale
 import torchvision
-from torchvision.transforms import transforms
+#from torchvision.transforms import transforms
 import pylab as plt
 from skimage.color import label2rgb
 from skimage.segmentation import slic

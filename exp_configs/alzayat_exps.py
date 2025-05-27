@@ -148,7 +148,7 @@ EXP_GROUPS["weakly_JCUfish"] = hu.cartesian_exp_group({
          'n_channels': 3, 'n_classes': 2},
     ]
 })
-
+#probar con un unico exp_dict del modelo
 EXP_GROUPS["weakly_SUMfish"] = hu.cartesian_exp_group({
     'batch_size': [1],
     'num_channels': 1,
@@ -183,23 +183,22 @@ EXP_GROUPS["weakly_SUMfish"] = hu.cartesian_exp_group({
          'n_channels': 3, 'n_classes': 2},
     ]
 })
-
-
-
+#probar con un unico exp_dict del modelo
 EXP_GROUPS["weakly_JCUfish_aff"] = hu.cartesian_exp_group({
     'batch_size': [1],
     'num_channels': 1,
     'dataset': [
-        {'name': 'JcuFish', 'n_classes': 2},
+        #{'name': 'JcuFish', 'n_classes': 1},
+        {'name': 'JcuFish', 'n_classes': 1},
 
     ],
     'dataset_size': [
-        #  {'train':10, 'val':10, 'test':10},
-        {'train': 'all', 'val': 'all'},
+        {'train':14, 'val':2, 'test':2},
+        #{'train': 'all', 'val': 'all'},
     ],
-    'max_epoch': [1000],
+    'max_epoch': [40], #[1000],
     'optimizer': ["adam"],
-    'lr': [1e-4, 1e-5, 1e-6],
+    'lr': [1e-4], #[1e-4, 1e-5, 1e-6],
     'model':
     # [
     #     {'name': 'semseg',
@@ -295,14 +294,14 @@ EXP_GROUPS["weakly_JCUfish_aff"] = hu.cartesian_exp_group({
     #     #  'with_affinity_average':True,
     #      } for l in [ 'lcfcn_const_loss', 'lcfcn_loss', ]] +
 
-    #      [{'name': 'semseg',
+    # +      [{'name': 'semseg',
     #      'loss': l,
     #      'base': 'fcn8_vgg16',
     #      'n_channels': 3, 
     #      'n_classes': 2,
     #      'with_affinity':True,
     #      'with_affinity_average':True,
-    #      } for l in [ 'point_level', 'cons_point_loss']] +
+    #      } for l in [ 'point_level', 'cons_point_loss']] #+
 
     #       [
 
@@ -326,7 +325,116 @@ EXP_GROUPS["weakly_JCUfish_aff"] = hu.cartesian_exp_group({
     ,
 })
 
+EXP_GROUPS["weakly_JCUfish_aff_OneModel"] = hu.cartesian_exp_group({
+    'batch_size': [1],
+    'num_channels': 1,
+    'dataset': [
+        #{'name': 'JcuFish', 'n_classes': 1},
+        {'name': 'JcuFish', 'n_classes': 1},
 
+    ],
+    'dataset_size': [
+        {'train':14, 'val':2, 'test':2},
+        #{'train': 'all', 'val': 'all'},
+    ],
+    'max_epoch': [40], #[1000],
+    'optimizer': ["adam"],
+    'lr': [1e-4], #[1e-4, 1e-5, 1e-6],
+    'model':
+    # [
+    #     {'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #      'with_attention':True,
+    #      } for l in ['lcfcn_loss', ]] +
+    [
+        {'name': 'semseg',
+         'loss': l,
+         'base': 'fcn8_vgg16',
+         'n_channels': 3, 
+         'n_classes': 2,
+         'with_affinity':True,
+        #  'with_affinity_average':True,
+         } for l in ['lcfcn_loss', ]]
+
+    # [
+    #     {'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #      'with_affinity':True,
+    #      'with_affinity_average':True,
+    #      } for l in ['lcfcn_loss', ]] +
+    # [
+    #     {'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #     #  'with_affinity':True,
+    #     #  'with_affinity_average':True,
+    #      } for l in [ 'lcfcn_const_loss', 'lcfcn_loss', ]] +
+
+    # +      [{'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #      'with_affinity':True,
+    #      'with_affinity_average':True,
+    #      } for l in [ 'point_level', 'cons_point_loss']] #+
+
+    #       [
+
+    #     {'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #      'with_affinity':True,
+    #      } for l in [  'cons_point_loss', 'point_level',]]
+
+    #      +
+    #     [
+    #      {'name': 'semseg',
+    #      'loss': l,
+    #      'base': 'fcn8_vgg16',
+    #      'n_channels': 3, 
+    #      'n_classes': 2,
+    #      } for l in [ 'point_level', 'cons_point_loss']]
+
+    #,
+})
+
+EXP_GROUPS["weakly_JCUfish_aff_OneModel_"] = hu.cartesian_exp_group({
+    'batch_size': [1],
+    'num_channels': 1,
+    'dataset': [
+        #{'name': 'JcuFish', 'n_classes': 1},
+        {'name': 'JcuFish', 'n_classes': 1},
+
+    ],
+    'dataset_size': [
+        {'train':14, 'val':2, 'test':2},
+        #{'train': 'all', 'val': 'all'},
+    ],
+    'max_epoch': [40], #[1000],
+    'optimizer': ["adam"],
+    'lr': [1e-4], #[1e-4, 1e-5, 1e-6],
+    'model':
+    [
+        {'name': 'semseg',
+         'loss': l,
+         'base': 'fcn8_vgg16',
+         'n_channels': 3, 
+         'n_classes': 1,
+         'with_affinity':True,
+        #  'with_affinity_average':True,
+         } for l in ['lcfcn_loss', ]]
+})
 
 # ==========================
 # the rest

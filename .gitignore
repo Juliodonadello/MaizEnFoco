@@ -15,3 +15,16 @@ tmp.png
 .ipynb_checkpoints/
 /Alz_temp/
 /.idea/
+
+venv/*
+venv/
+results/*
+results
+results_OLD
+results_OLD/*
+JCU_Fish.zip
+JCU_Fish_old
+JCU_Fish_old/*
+DeepAgro
+DeepAgro/*
+res38_seg.pth

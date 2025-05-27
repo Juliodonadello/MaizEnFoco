@@ -102,7 +102,8 @@ class FCN8VGG16(nn.Module):
         self.with_affinity = with_affinity
         if with_affinity or self.shared:
             self.model_aff = resnet38_aff.Net(self.n_classes, exp_dict).cuda()
-            self.model_aff.load_state_dict(torch.load(os.path.join('/mnt/public/weights', 'resnet38_aff_SEAM.pth')), strict=False)
+            #self.model_aff.load_state_dict(torch.load(os.path.join('/mnt/public/weights', 'resnet38_aff_SEAM.pth')), strict=False)
+            self.model_aff.load_state_dict(torch.load('res38_seg.pth'), strict=False)  
 
         self.with_affinity_average = with_affinity_average
         # siamese 

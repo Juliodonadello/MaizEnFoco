@@ -26,6 +26,9 @@ from torch.backends import cudnn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 cudnn.benchmark = True
 
 
@@ -167,7 +170,7 @@ def trainval(exp_dict, savedir_base, datadir, reset=False, num_workers=0):
         hu.save_pkl(score_list_path, score_list)
         print("Checkpoint Saved: %s" % savedir)
 
-    print('Experiment completed et epoch %d' % e)
+        print('Experiment completed et epoch %d' % e)
 
 
 if __name__ == "__main__":
