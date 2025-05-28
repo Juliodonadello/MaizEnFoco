@@ -31,7 +31,7 @@ def mean_iou(mask1, mask2):
         intersection = np.logical_and(pred_cls, gt_cls).sum()
         union = np.logical_or(pred_cls, gt_cls).sum()
         if union == 0:
-            ious.append(1.0)  # Si no hay píxeles de esa clase en ninguna de las dos
+            ious.append(1.0)
         else:
             ious.append(intersection / union)
 
@@ -54,6 +54,12 @@ def game_score(mask_gt, mask_pred, level):
             error += abs(int(count_gt) - int(count_pred))
     return error
 
+def count_objects(mask):
+    # Cuenta objetos como componentes conectados en máscara binaria
+    num_labels, labels_im = cv2.connectedComponents(mask.astype(np.uint8))
+    # Restamos 1 para ignorar el fondo
+    return max(num_labels - 1, 1)  # Evitamos división por cero
+
 def load_binary_mask(path, target_size):
     mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     if mask is None:
@@ -62,14 +68,12 @@ def load_binary_mask(path, target_size):
     return (mask > 127).astype(np.uint8)
 
 def comparar_y_mostrar(img_path, gt_mask_path, pred_mask_path):
-    # Leer máscara predicha (referencia de tamaño)
     pred_mask_raw = cv2.imread(pred_mask_path, cv2.IMREAD_GRAYSCALE)
     if pred_mask_raw is None:
         raise ValueError(f"No se pudo cargar la máscara predicha: {pred_mask_path}")
     pred_mask = (pred_mask_raw > 127).astype(np.uint8)
     height, width = pred_mask.shape
 
-    # Leer imagen original y máscara manual, redimensionadas al tamaño de la predicción
     img = cv2.imread(img_path)
     if img is None:
         raise ValueError(f"No se pudo cargar la imagen: {img_path}")
@@ -78,21 +82,31 @@ def comparar_y_mostrar(img_path, gt_mask_path, pred_mask_path):
 
     gt_mask = load_binary_mask(gt_mask_path, (width, height))
 
-    # Calcular métricas
+    # Calcular métricas clásicas
     dice = dice_coefficient(gt_mask, pred_mask)
     iou = iou_score(gt_mask, pred_mask)
     miou = mean_iou(gt_mask, pred_mask)
     mae = mean_absolute_error(gt_mask, pred_mask)
+    
+    # Calcular GAME absoluto
     game_levels = {L: game_score(gt_mask, pred_mask, L) for L in range(4)}
 
+    # Contar total de objetos en la máscara GT para normalizar GAME
+    total_objects = count_objects(gt_mask)
+
+    # Calcular GAME normalizado (dividido por total objetos)
+    game_levels_norm = {L: game_levels[L] / total_objects for L in game_levels}
+
+    # Mostrar resultados
     print(f"DICE: {dice:.4f}")
     print(f"IoU : {iou:.4f}")
     print(f"mIoU : {miou:.4f}")
     print(f"MAE : {mae:.4f}")
-    for L, game in game_levels.items():
-        print(f"GAME(L={L}): {game}")
+    print(f"Total objetos GT: {total_objects}")
+    for L in game_levels:
+        print(f"GAME(L={L}): {game_levels[L]}  |  Normalizado: {game_levels_norm[L]:.4f}")
 
-    # Mostrar resultados
+    # Mostrar imágenes
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
     axs[0].imshow(img_rgb)
@@ -110,7 +124,7 @@ def comparar_y_mostrar(img_path, gt_mask_path, pred_mask_path):
     plt.tight_layout()
     plt.show()
 
-# 👉 Parámetros de entrada
+# 👉 Parámetros de entrada (modifica las rutas a tus archivos)
 img_path = r'DICE_Masks\masks\657d1748-839a-4e18-ab64-a6cca9ec2e26.jpg'
 gt_mask_path = r'DICE_Masks\masks\657d1748-839a-4e18-ab64-a6cca9ec2e26.png'
 pred_mask_path = r'predicted_masks\512x512_657d1748-839a-4e18-ab64-a6cca9ec2e26_mask.png'
