@@ -9,10 +9,14 @@ from PIL import Image
 from skimage.draw import polygon
 from tqdm import tqdm
 
+# === Parámetros de tamaño fijo ===
+TARGET_WIDTH = 455
+TARGET_HEIGHT = 405
+
 # Paths
-DATA_DIR = 'DeepAgro/datasets/test_fffb7fa69'
+DATA_DIR = '../DeepAgro/datasets/final'
 ANNOTATION_PATH = os.path.join(DATA_DIR, 'annotations.json')
-OUTPUT_DIR = 'DeepAgro/Segmentation'
+OUTPUT_DIR = '../DeepAgro/Segmentation'
 
 # Crear carpetas de salida
 for subfolder in ['images/valid', 'images/empty', 'masks/valid', 'masks/empty']:
@@ -31,22 +35,35 @@ for ann in coco['annotations']:
     image_id = ann['image_id']
     annotations_by_image.setdefault(image_id, []).append(ann)
 
-# Procesar todas las imágenes
+# Extensiones posibles
+extensions = ['.jpg', '.jpeg', '.png']
+
+def buscar_archivo_sin_extension(base_path):
+    for ext in extensions:
+        full_path = base_path + ext
+        if os.path.exists(full_path):
+            return full_path
+    return None
+
+# Procesar imágenes
 data = []
 for image in tqdm(coco['images'], desc="Procesando imágenes"):
 
     img_id = image['id']
-    filename = image['file_name']
-    width, height = image['width'], image['height']
-    src_path = os.path.join(DATA_DIR, filename)
+    original_filename = image['file_name']
+    name, _ = os.path.splitext(original_filename)
+    src_base = os.path.join(DATA_DIR, name)
 
-    if not os.path.exists(src_path):
-        print(f"Imagen no encontrada: {src_path}")
+    src_path = buscar_archivo_sin_extension(src_base)
+
+    if not src_path:
+        print(f"Imagen no encontrada: {src_base}.[jpg/png/jpeg]")
         continue
 
     anns = annotations_by_image.get(img_id, [])
+    
+    filename = name + '.jpg'  # Forzar .jpg como nombre de destino
 
-    # Destinos
     if anns:
         image_dst = os.path.join(OUTPUT_DIR, 'images/valid', filename)
         mask_dst = os.path.join(OUTPUT_DIR, 'masks/valid', filename)
@@ -54,40 +71,45 @@ for image in tqdm(coco['images'], desc="Procesando imágenes"):
         image_dst = os.path.join(OUTPUT_DIR, 'images/empty', filename)
         mask_dst = os.path.join(OUTPUT_DIR, 'masks/empty', filename)
 
-    # Copiar imagen
-    shutil.copy(src_path, image_dst)
+    # Abrir imagen original y hacer resize
+    with Image.open(src_path) as im:
+        im_resized = im.convert("RGB").resize((TARGET_WIDTH, TARGET_HEIGHT), Image.BILINEAR)
+        im_resized.save(image_dst, "JPEG")
 
-    # Crear máscara vacía (con NumPy)
-    mask = np.zeros((height, width), dtype=np.uint8)
+    # Crear máscara vacía con tamaño original
+    width, height = image['width'], image['height']
+    original_mask = np.zeros((height, width), dtype=np.uint8)
 
-    if anns:  # Solo dibujar si hay anotaciones
+    if anns:
         for ann in anns:
             for seg in ann.get('segmentation', []):
                 points = np.array(seg).reshape(-1, 2)
-                rr, cc = polygon(points[:, 1], points[:, 0], shape=mask.shape)
-                mask[rr, cc] = 1  # Marca como 1 en la máscara
+                rr, cc = polygon(points[:, 1], points[:, 0], shape=original_mask.shape)
+                original_mask[rr, cc] = 1
 
-    # Guardar máscara
-    Image.fromarray(mask * 255).save(mask_dst)
-    Image.fromarray(mask * 255).save(mask_dst.replace(".jpg",".png"))  # Guardamos la máscara como imagen de 0-255
+    # Redimensionar la máscara
+    mask_pil = Image.fromarray(original_mask * 255).resize((TARGET_WIDTH, TARGET_HEIGHT), Image.NEAREST)
+    mask_np = np.array(mask_pil) // 255  # Convertir de nuevo a binario (0 o 1)
+
+    # Guardar máscara como .jpg y .png
+    Image.fromarray(mask_np * 255).save(mask_dst, "JPEG")
+    mask_dst_png = mask_dst.rsplit('.', 1)[0] + '.png'
+    Image.fromarray(mask_np * 255).save(mask_dst_png, "PNG")
 
     # Guardar metadata
     data.append({
-        'ID': f'valid/{filename}'.strip('.jpg'),
-        'labels': f'valid/{filename}'.strip('.jpg'),
+        'ID': f'valid/{name}',
+        'labels': f'valid/{name}',
         'has_annotation': int(bool(anns))
     })
 
-# Crear DataFrame
+# Crear y guardar CSVs
 df = pd.DataFrame(data)
-
-# Dividir en train/val/test
 train = df.sample(frac=0.8, random_state=42)
 remaining = df.drop(train.index)
 val = remaining.sample(frac=0.5, random_state=42)
 test = remaining.drop(val.index)
 
-# Guardar CSVs
 df.to_csv(os.path.join(OUTPUT_DIR, 'segmentation.csv'), index=False)
 train.to_csv(os.path.join(OUTPUT_DIR, 'train.csv'), index=False)
 val.to_csv(os.path.join(OUTPUT_DIR, 'val.csv'), index=False)

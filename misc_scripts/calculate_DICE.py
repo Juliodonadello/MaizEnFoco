@@ -127,6 +127,6 @@ def comparar_y_mostrar(img_path, gt_mask_path, pred_mask_path):
 # 👉 Parámetros de entrada (modifica las rutas a tus archivos)
 img_path = r'DICE_Masks\masks\657d1748-839a-4e18-ab64-a6cca9ec2e26.jpg'
 gt_mask_path = r'DICE_Masks\masks\657d1748-839a-4e18-ab64-a6cca9ec2e26.png'
-pred_mask_path = r'predicted_masks\512x512_657d1748-839a-4e18-ab64-a6cca9ec2e26_mask.png'
+pred_mask_path = r'predicted_masks_old\256x455_657d1748-839a-4e18-ab64-a6cca9ec2e26_mask.png'#'predicted_masks_old\512x512_657d1748-839a-4e18-ab64-a6cca9ec2e26_mask.png'
 
 comparar_y_mostrar(img_path, gt_mask_path, pred_mask_path)

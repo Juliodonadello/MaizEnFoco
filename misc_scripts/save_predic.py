@@ -1,4 +1,7 @@
 import os
+import sys
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scripts')))
 import torch
 import numpy as np
 import torchvision.transforms as T
@@ -12,15 +15,17 @@ import exp_configs
 
 
 # Configuraciones
-exp_name = 'with_affinity&lcfcn_loss'                               # Nombre del experimento
-base_dir = os.getcwd()                                              # Ruta base (usualmente donde se ejecuta el script)
-exp_dict_path = os.path.join(base_dir, 'results', exp_name, 'exp_dict.json') # Ruta completa al exp_dict.json
-model_path = os.path.join(base_dir, 'results', exp_name, 'model_best.pth') # Ruta completa al modelo
+exp_name = '8f7844d98e8d29e93b3831b9576a7db4' #'with_affinity&lcfcn_loss'       # Nombre del experimento
+base_dir = os.getcwd()                                                          # Ruta base (usualmente donde se ejecuta el script)
+exp_dict_path = os.path.join(base_dir, 'results', exp_name, 'exp_dict.json')    # Ruta completa al exp_dict.json
+model_path = os.path.join(base_dir, 'results', exp_name, 'model_best.pth')      # Ruta completa al modelo
 
 # Lista de imágenes a predecir
 validation_images = [
-    r'DeepAgro\Segmentation\images\valid\657d1748-839a-4e18-ab64-a6cca9ec2e26.jpg',
-    r'DeepAgro\Segmentation\images\valid\db836de8-2a4f-4e2d-81c5-50c4b6c7e874.jpg'
+    #r'DeepAgro\Segmentation\images\valid\657d1748-839a-4e18-ab64-a6cca9ec2e26.jpg',
+    #r'DeepAgro\Segmentation\images\valid\db836de8-2a4f-4e2d-81c5-50c4b6c7e874.jpg'
+    r'DeepAgro\Segmentation\images\valid\d4ba4743b_e2b4a3ce-e6da-4f9a-95e7-14cf8d61386a.jpg',
+    r'DeepAgro\Segmentation\images\valid\d4ba4743b_d527010a-a5a2-47b1-b88a-bdec19c44d36.jpg'   #con sombra
 ]
 for image_path in validation_images:
     print(repr(image_path))  # <- muestra caracteres especiales como \v
