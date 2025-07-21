@@ -7,13 +7,13 @@ El sistema permite entrenar y validar modelos de segmentación semántica a part
 ## Estructura del Proyecto
 
 ```
-src/
-├── datasets/        # Definiciones de datasets personalizados para DeepAgro
-├── models/          # Implementación de arquitecturas FCN8 (VGG16, ResNet)
-├── utils/           # Funciones auxiliares para métricas, visualización y procesamiento
-exp_configs/         # Configuraciones de experimentos para entrenamiento/validación
-streamlit_app/       # Interfaz gráfica para visualización y validación de resultados
-results/             # Carpeta destino para almacenar resultados de los experimentos
+. src/
+  ├ datasets/        # Definiciones de datasets personalizados para DeepAgro
+  ├ models/          # Implementación de arquitecturas FCN8 (VGG16, ResNet)
+  └ utils/           # Funciones auxiliares para métricas, visualización y procesamiento
+. exp_configs/         # Configuraciones de experimentos para entrenamiento/validación
+. streamlit_app/       # Interfaz gráfica para visualización y validación de resultados
+. results/             # Carpeta destino para almacenar resultados de los experimentos
 ```
 
 ## Configuración del Entorno
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 El sistema utiliza configuraciones de experimentos almacenadas en la carpeta `exp_configs/`. Estas contienen los hiperparámetros y rutas necesarias para cada entrenamiento. La ejecución se realiza mediante el siguiente comando:
 
 ```bash
-python trainval.py -e <nombre_experimento> -sb results -d DeepAgro
+python trainval.py -e <nombre_experimento> -sb results -d <nombre_dataset>
 ```
 
 Por ejemplo, para reproducir un experimento estándar:
@@ -81,6 +81,29 @@ Las arquitecturas utilizadas están basadas en redes convolucionales totalmente 
 - Mean Absolute Error (MAE)
 - Grid Average Mean Absolute Error (GAME)
 - Precisión espacial mediante máscaras de puntos
+
+
+## Estructura del Dataset
+
+El dataset utilizado para entrenar y validar los modelos proviene del uso de la clase custom "DeepAgro". Este dataset se encuentra organizado de la siguiente manera:
+
+```
+DeepAgro/
+├── Segmentation/
+│   ├── images/
+│   │   ├── empty/   # Imágenes sin instancias (útiles para validación de falsos positivos)
+│   │   └── valid/   # Imágenes con instancias de plantas
+│   ├── masks/       # Máscaras binarias con puntos que representan el centro aproximado de cada planta
+│   │   ├── empty/   # Máscaras sin instancias (útiles para validación de falsos positivos)
+│   │   └── valid/   # Máscaras con instancias de plantas
+│   ├── segmentation.csv  # Relación imagen - máscara para todo el dataset
+│   ├── train.csv         # Subconjunto para entrenamiento
+│   ├── val.csv           # Subconjunto para validación
+│   └── test.csv          # Subconjunto para prueba
+```
+
+Las máscaras contenidas en `masks/` no corresponden a segmentaciones completas por contorno, sino que son imágenes binarias donde cada instancia está representada únicamente por un píxel blanco en su posición central aproximada. Estas máscaras de puntos fueron utilizadas como supervisión débil para guiar el modelo en la detección y segmentación de las plantas.
+
 
 ## Licencia
 
