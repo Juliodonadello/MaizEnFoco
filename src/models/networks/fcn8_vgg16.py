@@ -5,6 +5,10 @@ from skimage import morphology as morph
 import numpy as np
 from src.modules.eprop import eprop
 import torch.utils.model_zoo as model_zoo
+# new
+#import sys
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'scripts')))
+##end new
 from scripts.SEAM.network import resnet38_SEAM, resnet38_aff
 
 

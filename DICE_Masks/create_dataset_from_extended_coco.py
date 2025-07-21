@@ -10,7 +10,8 @@ from skimage.draw import polygon
 from tqdm import tqdm
 
 # Paths
-DATA_DIR = 'DeepAgro/datasets/test_fffb7fa69'
+#DATA_DIR = 'DeepAgro/datasets/test_fffb7fa69'
+DATA_DIR = r'C:\Users\julio\OneDrive\Documents\CEIA\TESIS_FINAL\coco-annotator\coco-annotator\datasets\nuevo_lote'
 ANNOTATION_PATH = os.path.join('DICE_Masks', 'coco_full_masks.json')
 OUTPUT_DIR = 'DICE_Masks/masks/'
 

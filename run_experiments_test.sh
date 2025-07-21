@@ -5,12 +5,12 @@ source ./venv/Scripts/activate
 
 # Lista de nombres de experimentos
 EXPERIMENTS=(
-    "weakly_aff_DeepAgro_exp1"
-    "weakly_aff_DeepAgro_exp2"
-    "weakly_aff_DeepAgro_exp3"
-    "weakly_aff_DeepAgro_exp4"
-    "weakly_aff_DeepAgro_exp5"
-    "weakly_aff_DeepAgro_exp6"
+    "weakly_aff_test_exp1"
+    "weakly_aff_test_exp2"
+    "weakly_aff_test_exp3"
+    "weakly_aff_test_exp4"
+    "weakly_aff_test_exp5"
+    "weakly_aff_test_exp6"
 )
 
 # Ejecutar cada experimento secuencialmente

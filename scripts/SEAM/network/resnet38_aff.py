@@ -150,7 +150,7 @@ class Net(resnet38d.Net):
             indices_id = torch.stack([torch.arange(0, area).long(), torch.arange(0, area).long()])
 
             aff_mat = sparse.FloatTensor(torch.cat([indices, indices_id, indices_tp], dim=1),
-                                      torch.cat([aff, torch.ones([area]), aff])).to_dense().cuda()
+                                        torch.cat([aff, torch.ones([area]), aff])).to_dense().cuda()
 
             return aff_mat
 
@@ -179,6 +179,3 @@ class Net(resnet38d.Net):
                         groups[1].append(m.bias)
 
         return groups
-
-
-

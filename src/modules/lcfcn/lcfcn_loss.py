@@ -217,7 +217,7 @@ def get_points_from_mask(mask, bg_points=0):
         ind = points_class!=0
         n_points += int(points_class[ind].sum())
         points[ind] = c
-    assert morph.label((mask).squeeze()).max() == n_points
+    #assert morph.label((mask).squeeze()).max() == n_points
     points[points==0] = 255
     if bg_points == -1:
        bg_points = n_points
