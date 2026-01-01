@@ -1,5 +1,6 @@
 # Sistema de segmentación en cultivos de maíz utilizando IA aplicada
 [Abstract](https://drive.google.com/file/d/1VsidXCayVYQGN2685RFOHyLIVe9KXFcS/view?usp=sharing)
+
 Este repositorio contiene el código desarrollado para la segmentación de plantas de maíz en estadíos fenológicos tempranos utilizando técnicas de aprendizaje débilmente supervisado, con el objetivo de analizar la desuniformidad espacial del cultivo a partir de imágenes de campo. El proyecto fue realizado en colaboración con DeepAgro como parte de la Especialización en Inteligencia Artificial.
 
 El sistema permite entrenar y validar modelos de segmentación semántica a partir de anotaciones basadas únicamente en puntos por planta, facilitando la inferencia y el análisis cuantitativo del desempeño mediante métricas específicas para tareas de conteo y localización.
